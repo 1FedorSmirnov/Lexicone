@@ -7,6 +7,11 @@ DROP TABLE IF EXISTS dictionaries;
 DROP TABLE IF EXISTS users CASCADE ;
 DROP TABLE IF EXISTS settings;
 
+DROP TABLE IF EXISTS acl_entry;
+DROP TABLE IF EXISTS acl_object_identity;
+
+DROP TABLE IF EXISTS acl_class;
+DROP TABLE IF EXISTS acl_sid;
 
 
 DROP SEQUENCE IF EXISTS word_id_seq;
@@ -104,5 +109,64 @@ create table settings
     CONSTRAINT settings_pkey PRIMARY KEY (id)
 );
 
+CREATE TABLE acl_sid
+(
+    id        SERIAL,
+    principal integer      NOT NULL,
+    sid       varchar(100) NOT NULL,
+    CONSTRAINT sid_pkey PRIMARY KEY (id),
+    CONSTRAINT unique_uk_1 UNIQUE (sid, principal)
+);
 
+CREATE TABLE acl_class
+(
+    id    SERIAL,
+    class varchar(255) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT unique_uk_2 UNIQUE (class)
+);
+
+CREATE TABLE IF NOT EXISTS acl_entry
+(
+    id                  SERIAL,
+    acl_object_identity bigint  NOT NULL,
+    ace_order           integer NOT NULL,
+    sid                 bigint  NOT NULL,
+    mask                integer NOT NULL,
+    granting            SMALLINT NOT NULL,
+    audit_success       SMALLINT NOT NULL,
+    audit_failure       SMALLINT NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT unique_uk_4 UNIQUE (acl_object_identity, ace_order)
+);
+
+CREATE TABLE IF NOT EXISTS acl_object_identity
+(
+    id                 SERIAL,
+    object_id_class    bigint  NOT NULL,
+    object_id_identity varchar  NOT NULL,
+    parent_object      bigint DEFAULT NULL,
+    owner_sid          bigint DEFAULT NULL,
+    entries_inheriting SMALLINT NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT unique_uk_3 UNIQUE (object_id_class, object_id_identity)
+);
+
+ALTER TABLE acl_entry
+    ADD FOREIGN KEY (acl_object_identity) REFERENCES acl_object_identity (id);
+
+ALTER TABLE acl_entry
+    ADD FOREIGN KEY (sid) REFERENCES acl_sid (id);
+
+--
+-- Constraints for table acl_object_identity
+--
+ALTER TABLE acl_object_identity
+    ADD FOREIGN KEY (parent_object) REFERENCES acl_object_identity (id);
+
+ALTER TABLE acl_object_identity
+    ADD FOREIGN KEY (object_id_class) REFERENCES acl_class (id);
+
+ALTER TABLE acl_object_identity
+    ADD FOREIGN KEY (owner_sid) REFERENCES acl_sid (id);
 

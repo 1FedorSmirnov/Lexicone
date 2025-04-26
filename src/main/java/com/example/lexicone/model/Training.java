@@ -1,10 +1,10 @@
 package com.example.lexicone.model;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -32,6 +32,9 @@ public class Training {
 
     @Column(name = "train_date", nullable = false)
     private LocalDate trainingDate;
+
+    @OneToMany(mappedBy = "training", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Result> results;
 
     public Training(Dictionary dictionary, boolean isRepeat, List<Word> words, LocalDate trainingDate) {
         this.dictionary = dictionary;
